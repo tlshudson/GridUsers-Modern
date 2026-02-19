@@ -12,7 +12,8 @@ class UserController extends Controller
      */
     public function index()
     {
-        return User::all();
+        $user = User::all();
+        return response()->json($user, 200);
     }
 
     /**
@@ -20,7 +21,7 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+          
     }
 
     /**
@@ -28,7 +29,15 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
+        try {
+            $user = User::findOrFail($id);
+            return response()->json($user, 200);
+        } catch (\Exception $ex) {
+            return response()->json([
+                'message' => 'Usuário não encontrado!'
+            ], 404);
+        }
+
     }
 
     /**
