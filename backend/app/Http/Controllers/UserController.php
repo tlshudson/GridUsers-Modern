@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUser;
+use App\Http\Requests\UpdateStoreUser;
+use App\Http\Resources\UserCollection;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -14,8 +17,11 @@ class UserController extends Controller
      */
     public function index()
     {
-        $user = User::all();
-        return response()->json($user, 200);
+        // Pegando os usuários com paginação
+        $users = User::orderByDesc('id')->paginate(3);
+
+        // O segredo está aqui: UserResource::collection()
+        return UserCollection::collection($users);
     }
 
     /**
@@ -50,15 +56,24 @@ class UserController extends Controller
                 'message' => 'Usuário não encontrado!'
             ], 404);
         }
-
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateStoreUser $request, string $id)
     {
-        //
+        $data = $request->validated();
+        try {
+            $user = User::findOrFail($id);
+            $user->update($data);
+
+            return response()->json($user, 200);
+        } catch (\Exception $ex) {
+            return response()->json([
+                'message' => 'Falha ao atualizar o usuário'
+            ], 400);
+        }
     }
 
     /**
@@ -66,6 +81,16 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $removed = User::destroy($id);
+            if (!$removed) {
+                throw new Exception();
+            }
+            return response()->json(null, 204);
+        } catch (\Exception $ex) {
+            return response()->json([
+                'message' => 'Falha ao apagar usuário!'
+            ], 400);
+        }
     }
 }
